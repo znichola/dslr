@@ -7,6 +7,15 @@ fetch() {
 }
 
 venv() {
+
+    # if in school
+    virtualenv .venv
+
+    # launch jupyter 
+
+    python -m jupyter notebook
+
+    # else
     python3 -m venv .venv \
         && source .venv/bin/activate \
         && pip install --upgrade pip \

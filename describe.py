@@ -6,6 +6,10 @@ from functools import reduce
 from math import sqrt
 
 
+def trainDataFilePath():
+    return "datasets/dataset_train.csv"
+
+
 def loadData(file_path: str = "data.csv") -> Optional[pd.DataFrame]:
     try:
         data = pd.read_csv(file_path)
