@@ -8,9 +8,9 @@ fetch() {
 
 venv() {
 
-    IN_SCHOOL="$(echo $SESSION_MANAGER | grep 42 | wc --lines)
+    IN_SCHOOL="$(echo $SESSION_MANAGER | grep 42 | wc --lines)"
 
-    VENV="python -m venv"
+    VENV="python3 -m venv"
 
     if [[ IN_SCHOOL == 1 ]]; then
         VENV="virtualenv .venv"
@@ -22,8 +22,11 @@ venv() {
         && pip install -r requirements.txt
 
     echo "ℹ️ To activate the venv: run : source .venv/bin/activate"
+}
 
-    # python -m jupyter notebook
+jupyter() {
+    source .venv/bin/activate \
+        && python3 -m jupyter notebook
 }
 
 usage() {
