@@ -21,7 +21,8 @@ venv() {
         && pip install --upgrade pip \
         && pip install -r requirements.txt
 
-    echo "ℹ️ To activate the venv: run : source .venv/bin/activate"
+    echo "ℹ️ To activate the venv run : source .venv/bin/activate"
+    echo "ℹ️ To activate the venv run : .\.venv\Scripts\activate"
 }
 
 jupyter() {
