@@ -24,11 +24,15 @@ def loadData(file_path: str = "data.csv") -> Optional[pd.DataFrame]:
 
 def mean(ls: list[int | float]) -> float:
     '''Calculate the Mean'''
+    if len(ls) == 0:
+        return float('NaN')
     return sum(ls) / len(ls)
 
 
 def median(ls: list[int | float]) -> float:
     '''Calculate the Median'''
+    if len(ls) == 0:
+        return float('NaN')
     if len(ls) == 1:
         return float(ls[0])
     else:
@@ -50,6 +54,8 @@ def std(ls: list[int | float]) -> float:
 
 def quartile(ls: list[int | float]) -> tuple[float, float]:
     '''Calculate Quartile (25% and 75%)'''
+    if len(ls) == 0:
+        return float('NaN'), float('NaN')
     if len(ls) == 1:
         return float(ls[0]), float(ls[0])
     s = sorted(ls)
@@ -59,10 +65,14 @@ def quartile(ls: list[int | float]) -> tuple[float, float]:
 
 
 def min(ls: list[int | float]) -> float:
+    if len(ls) == 0:
+        return float('NaN')
     return reduce(lambda acc, val : val if acc > val else acc, ls, ls[0])
 
 
 def max(ls: list[int | float]) -> float:
+    if len(ls) == 0:
+        return float('NaN')
     return reduce(lambda acc, val : val if acc < val else acc, ls, ls[0])
 
 
@@ -103,18 +113,20 @@ if __name__ == "__main__":
         print("Error: Please provide a valid file path")
         exit(1)
 
-    try:
-        df = loadData(sys.argv[1])
-        if df is None:
-            raise ValueError("loadData returned None")
-        
-        # df = df.drop(columns=['Index', 'index'], errors='ignore')
+    # try:
+    df = loadData(sys.argv[1])
+    if df is None:
+        raise ValueError("loadData returned None")
+    
+    # df = df.drop(columns=['Index', 'index'], errors='ignore')
 
-        print(describe(df))
+    print(df)
 
-        # print("\n\n")
+    print(describe(df))
+
+    # print("\n\n")
         # print(df.describe())
 
-    except Exception:
-        print("Error: Failed to process or describe the dataset")
-        exit(1)
+    # except Exception:
+    #     print("Error: Failed to process or describe the dataset")
+    #     exit(1)
