@@ -1,10 +1,36 @@
 import os
 import sys
+import pandas as pd
 from describe import loadData, trainDataFilePath
+from logreg_train import hypothesis, cleanUpData, saveWeightsToFile
+import matplotlib.pyplot as plt
 
 
-def loadWeights(file_path="weights.csv") -> list[float] | None:
+def loadWeights(file_path="weights.csv") -> pd.DataFrame | None:
     return loadData(file_path)
+
+
+def predict_houses(df: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame:
+    all_houses = df["Hogwarts House"].unique()
+
+    feature_cols = df.select_dtypes(include='number').columns
+    predictions = []
+
+    print(feature_cols)
+
+    for i, student in df.iterrows():
+        scores = {}
+        for house in all_houses:
+
+            weight_vec = weights[house].values
+            x_vec = student[feature_cols].values
+           
+            score = hypothesis(weight_vec, x_vec)
+            
+            scores[house] = score
+        predicted_house = max(scores, key=scores.get)
+        predictions.append(predicted_house)
+    return pd.DataFrame(predictions)
 
 
 if __name__ == "__main__":
@@ -28,5 +54,21 @@ if __name__ == "__main__":
     data = loadData(trainDataFilePath())
     if data is None:
         exit(1)
+    
+    data = cleanUpData(data)
 
-    print(weights)
+    predictions = predict_houses(data, weights)
+    saveWeightsToFile(predictions, "houses.csv")
+
+    print(predictions)
+
+    true_labels = data["Hogwarts House"].reset_index(drop=True)
+    predicted_labels = predictions[0].reset_index(drop=True)
+
+    correct = (true_labels == predicted_labels)
+    num_correct = correct.sum()
+    num_total = len(correct)
+    num_incorrect = num_total - num_correct
+    accuracy = num_correct / num_total
+
+    print(f"Accuracy: {accuracy * 100:.2f}%")

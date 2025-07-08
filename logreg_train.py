@@ -16,6 +16,7 @@ def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> 
 # Sigmoid function that places all inputs between 0 and 1
 def sigmoid(z) -> float:
     '''g(z) = 1 / (1 + e-z)'''
+    z = max(min(z, 100), -100)  # clamp z to [-100, 100]
     return 1 / (1 + math.pow(math.e, -z))
 
 
@@ -58,8 +59,9 @@ def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=columns_to_drop).dropna() # also drop lines with missing data
 
 
-def train(df: pd.DataFrame, learning_rate = 0.001, num_iterations = 1000):
-    all_houses = df["Hogwarts House"].unique()
+def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
+    # all_houses = df["Hogwarts House"].unique()
+    all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
     feature_cols = df.select_dtypes(include='number').columns
     num_features = len(feature_cols)
 
@@ -77,26 +79,24 @@ def train(df: pd.DataFrame, learning_rate = 0.001, num_iterations = 1000):
 
     for generation in range(num_iterations):
         for house in all_houses:
-            w = weights_per_house[house]
-            y = ans_per_house[house]
-            
-            gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=["Gradient"])
+            w_vec = weights_per_house[house].values
+            y_vec = ans_per_house[house].values
 
-            for ii, gradient in gradients.iterrows():
-                print("GRADIENT", gradient)
-                for i, student in df.iterrows():
-                    print("STUDENT", student)
-                    d = partial_derivative(hypothesis(w, student), y[i], student.iloc[ii])
-                    # print("I:", ii, "FEATURE:", "DIV:", d)
-                    gradients["Gradient"][ii] += d
-                gradients["Gradient"][ii] /= num_students
-            print(gradients)
-            exit(0)
+            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns")
+            # loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
+ 
+            h_y_diff = h_vec - y_vec
 
+            gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=[0])
 
+            for feature in feature_cols:
+                x_j = df[feature].values
+                gradients.loc[feature, 0] = (h_y_diff * x_j).mean()
 
+            weights_per_house[house] = weights_per_house[house] - learning_rate * gradients[0]
+            # print(weights_per_house)
 
-    return ans_per_house
+    return weights_per_house
 
 
 
@@ -117,7 +117,8 @@ if __name__ == "__main__":
 
     df = cleanUpData(data)
 
+    weights = train(df)
 
-    print(train(df))
+    print(weights)
 
-    # print(df)
+    saveWeightsToFile(weights)
