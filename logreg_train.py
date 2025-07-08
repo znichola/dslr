@@ -40,6 +40,10 @@ def cost(theta_vec, x_vec, y) -> float:
 
     return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
+def cost(h, y) -> float:
+    '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
+    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
+
 
 def partial_derivative(h, y, j):
     '''(hθ(x_i) - y_i) * x_i_j'''
@@ -54,17 +58,45 @@ def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=columns_to_drop).dropna() # also drop lines with missing data
 
 
-def train(df: pd.DataFrame):
-
-
+def train(df: pd.DataFrame, learning_rate = 0.001, num_iterations = 1000):
     all_houses = df["Hogwarts House"].unique()
     feature_cols = df.select_dtypes(include='number').columns
     num_features = len(feature_cols)
 
-    print(df)
+    num_students = len(df)
 
-    return all_houses, num_features, feature_cols
-    
+    weights_per_house = pd.DataFrame(
+        data=0,
+        index=feature_cols,
+        columns=all_houses
+    )
+
+    ans_per_house = pd.get_dummies(df["Hogwarts House"])
+    df = df.drop(columns=["Hogwarts House"])
+
+
+    for generation in range(num_iterations):
+        for house in all_houses:
+            w = weights_per_house[house]
+            y = ans_per_house[house]
+            
+            gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=["Gradient"])
+
+            for ii, gradient in gradients.iterrows():
+                print("GRADIENT", gradient)
+                for i, student in df.iterrows():
+                    print("STUDENT", student)
+                    d = partial_derivative(hypothesis(w, student), y[i], student.iloc[ii])
+                    # print("I:", ii, "FEATURE:", "DIV:", d)
+                    gradients["Gradient"][ii] += d
+                gradients["Gradient"][ii] /= num_students
+            print(gradients)
+            exit(0)
+
+
+
+
+    return ans_per_house
 
 
 
