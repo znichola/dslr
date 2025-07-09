@@ -10,6 +10,13 @@ def loadWeights(file_path="weights.csv") -> pd.DataFrame | None:
     return loadData(file_path)
 
 
+def normalizeDataWithStats(df: pd.DataFrame, feature_mean: pd.Series, feature_std: pd.Series) -> pd.DataFrame:
+    numerical_features = df.select_dtypes('number').columns
+    normalized_dataset = (df[numerical_features] - feature_mean) / feature_std
+    normalized_dataset['Hogwarts House'] = df['Hogwarts House']
+    return normalized_dataset
+
+
 def predict_houses(df: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame:
     all_houses = df["Hogwarts House"].unique()
 
@@ -46,8 +53,8 @@ if __name__ == "__main__":
 
 
     # TODO : switch to using the args
-    weights = loadWeights()
-    if weights is None:
+    raw_weights = loadWeights()
+    if raw_weights is None:
         exit(1)
 
     # TODO : switch to using arg for the input
@@ -56,6 +63,10 @@ if __name__ == "__main__":
         exit(1)
     
     data = cleanUpData(data)
+
+    weights = raw_weights.drop(columns=["Mean", "Std"])
+    feature_mean = raw_weights["Mean"]
+    feature_std = raw_weights["Std"]
 
     predictions = predict_houses(data, weights)
     saveWeightsToFile(predictions, "houses.csv")

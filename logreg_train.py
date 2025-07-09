@@ -2,8 +2,8 @@ import os
 import sys
 import math
 import pandas as pd
-from describe import loadData, trainDataFilePath
-
+from describe import loadData, trainDataFilePath, mean
+import matplotlib.pyplot as plt
 
 def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> None:
     try:
@@ -17,7 +17,7 @@ def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> 
 def sigmoid(z) -> float:
     '''g(z) = 1 / (1 + e-z)'''
     z = max(min(z, 100), -100)  # clamp z to [-100, 100]
-    return 1 / (1 + math.pow(math.e, -z))
+    return 1 / (1 + math.exp(-z))
 
 
 # g(θ^T x) the T comes from transpose, so transpose theta and multiply by x
@@ -38,11 +38,18 @@ def cost(theta_vec, x_vec, y) -> float:
     # the model's estimate for the probability of a student 
     # belongin to the house the weights are trained on
     h = hypothesis(theta_vec, x_vec)
-
+    if h <= 0 or h >= 1:
+        print(f"Suspicious h: {h}, y: {y}")
+    epsilon = 1e-15
+    h = max(min(h, 1 - epsilon), epsilon)
     return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 def cost(h, y) -> float:
     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
+    if h <= 0 or h >= 1:
+        print(f"Suspicious h: {h}, y: {y}")
+    epsilon = 1e-15
+    h = max(min(h, 1 - epsilon), epsilon)
     return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 
@@ -59,7 +66,19 @@ def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=columns_to_drop).dropna() # also drop lines with missing data
 
 
-def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
+def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
+    feature_mean = df.mean(numeric_only=True)
+    feature_std = df.std(numeric_only=True)
+    numerical_features = df.select_dtypes('number').columns
+    normalized_dataset = (
+        df[numerical_features] - feature_mean
+    ) / feature_std
+
+    normalized_dataset['Hogwarts House'] = df['Hogwarts House']
+    return normalized_dataset, feature_mean, feature_std
+
+
+def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
     # all_houses = df["Hogwarts House"].unique()
     all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
     feature_cols = df.select_dtypes(include='number').columns
@@ -76,6 +95,7 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
     ans_per_house = pd.get_dummies(df["Hogwarts House"])
     df = df.drop(columns=["Hogwarts House"])
 
+    loss_history = {house: [] for house in all_houses}
 
     for generation in range(num_iterations):
         for house in all_houses:
@@ -83,8 +103,11 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
             y_vec = ans_per_house[house].values
 
             h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns")
-            # loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
- 
+
+            loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
+
+            loss_history[house].append(mean(loss))
+
             h_y_diff = h_vec - y_vec
 
             gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=[0])
@@ -96,7 +119,7 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
             weights_per_house[house] = weights_per_house[house] - learning_rate * gradients[0]
             # print(weights_per_house)
 
-    return weights_per_house
+    return weights_per_house, pd.DataFrame(loss_history)
 
 
 
@@ -115,10 +138,21 @@ if __name__ == "__main__":
     if data is None:
         exit(1)
 
-    df = cleanUpData(data)
+    df, feature_mean, feature_std = normalizeData(cleanUpData(data))
 
-    weights = train(df)
 
+    weights, loss = train(df)
+
+    weights['Mean'] = feature_mean.values
+    weights['Std'] = feature_std.values
+    
     print(weights)
 
     saveWeightsToFile(weights)
+
+    loss.plot(figsize=(10, 6), title="Training Loss per House")
+    plt.xlabel("Iteration")
+    plt.ylabel("Average Loss")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
