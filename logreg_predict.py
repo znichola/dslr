@@ -20,8 +20,11 @@ def normalizeDataWithStats(df: pd.DataFrame, feature_mean: pd.Series, feature_st
 def predict_houses(df: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame:
     all_houses = df["Hogwarts House"].unique()
 
+    df.insert(0, "bias", 1.0)
+    
     feature_cols = df.select_dtypes(include='number').columns
     predictions = []
+
 
     print(feature_cols)
 
@@ -35,6 +38,7 @@ def predict_houses(df: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame:
             score = hypothesis(weight_vec, x_vec)
             
             scores[house] = score
+        print(scores)
         predicted_house = max(scores, key=scores.get)
         predictions.append(predicted_house)
     return pd.DataFrame(predictions)

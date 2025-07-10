@@ -4,6 +4,7 @@ import math
 import pandas as pd
 from describe import loadData, trainDataFilePath, mean
 import matplotlib.pyplot as plt
+import numpy as np
 
 def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> None:
     try:
@@ -29,20 +30,20 @@ def hypothesis(theta_vec, x_vec) -> float:
 
 # The cost/loss for of an estimate of whether or not a student belongs to
 # the house these weights are trained to predict
-def cost(theta_vec, x_vec, y) -> float:
-    '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
+# def cost(theta_vec, x_vec, y) -> float:
+#     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
 
-    # x_vec : the subject grades for the student
-    # y     : the answer, 1 if yes the student i part of this house, 0 if not
+#     # x_vec : the subject grades for the student
+#     # y     : the answer, 1 if yes the student i part of this house, 0 if not
 
-    # the model's estimate for the probability of a student 
-    # belongin to the house the weights are trained on
-    h = hypothesis(theta_vec, x_vec)
-    if h <= 0 or h >= 1:
-        print(f"Suspicious h: {h}, y: {y}")
-    epsilon = 1e-15
-    h = max(min(h, 1 - epsilon), epsilon)
-    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
+#     # the model's estimate for the probability of a student 
+#     # belongin to the house the weights are trained on
+#     h = hypothesis(theta_vec, x_vec)
+#     if h <= 0 or h >= 1:
+#         print(f"Suspicious h: {h}, y: {y}")
+#     epsilon = 1e-15
+#     h = max(min(h, 1 - epsilon), epsilon)
+#     return - (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 def cost(h, y) -> float:
     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
@@ -50,7 +51,7 @@ def cost(h, y) -> float:
         print(f"Suspicious h: {h}, y: {y}")
     epsilon = 1e-15
     h = max(min(h, 1 - epsilon), epsilon)
-    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
+    return - (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 
 def partial_derivative(h, y, j):
@@ -83,11 +84,10 @@ def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
     all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
     feature_cols = df.select_dtypes(include='number').columns
     num_features = len(feature_cols)
-
     num_students = len(df)
 
     weights_per_house = pd.DataFrame(
-        data=0,
+        data=0.0,
         index=feature_cols,
         columns=all_houses
     )
@@ -97,29 +97,32 @@ def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
 
     loss_history = {house: [] for house in all_houses}
 
-    for generation in range(num_iterations):
-        for house in all_houses:
-            w_vec = weights_per_house[house].values
-            y_vec = ans_per_house[house].values
+    X = df.values  # shape: (m, n)
+    Y = ans_per_house.values  # shape: (m, k)
 
-            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns")
+    for iteration in range(num_iterations):
+        for house_idx, house in enumerate(all_houses):
+            theta = weights_per_house[house].values  # shape: (n,)
+            y = Y[:, house_idx]  # shape: (m,)
 
-            loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
+            # Compute predictions for all students
+            z = X @ theta  # shape: (m,)
+            h = 1 / (1 + np.exp(-np.clip(z, -100, 100)))  # sigmoid vectorized
 
-            loss_history[house].append(mean(loss))
+            # Compute loss
+            epsilon = 1e-15
+            h = np.clip(h, epsilon, 1 - epsilon)
+            loss = - (y * np.log(h) + (1 - y) * np.log(1 - h))
+            loss_history[house].append(np.mean(loss))
 
-            h_y_diff = h_vec - y_vec
+            # Compute gradient
+            gradient = (1 / num_students) * (X.T @ (h - y))  # shape: (n,)
 
-            gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=[0])
-
-            for feature in feature_cols:
-                x_j = df[feature].values
-                gradients.loc[feature, 0] = (h_y_diff * x_j).mean()
-
-            weights_per_house[house] = weights_per_house[house] - learning_rate * gradients[0]
-            # print(weights_per_house)
+            # Update weights
+            weights_per_house[house] = theta - learning_rate * gradient
 
     return weights_per_house, pd.DataFrame(loss_history)
+
 
 
 
@@ -140,8 +143,14 @@ if __name__ == "__main__":
 
     df, feature_mean, feature_std = normalizeData(cleanUpData(data))
 
+    df.insert(0, 'Bias', 1.0)
+
+    print(df)
 
     weights, loss = train(df)
+
+    feature_mean['Bias'] = 0.0
+    feature_std['Bias'] = 1.0
 
     weights['Mean'] = feature_mean.values
     weights['Std'] = feature_std.values
