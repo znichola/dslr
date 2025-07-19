@@ -2,7 +2,10 @@ import os
 import sys
 import math
 import pandas as pd
-from describe import loadData, trainDataFilePath
+from describe import loadData, trainDataFilePath, mean
+import matplotlib.pyplot as plt
+
+EPSILON = 1e-15
 
 
 def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> None:
@@ -16,8 +19,10 @@ def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> 
 # Sigmoid function that places all inputs between 0 and 1
 def sigmoid(z) -> float:
     '''g(z) = 1 / (1 + e-z)'''
-    z = max(min(z, 100), -100)  # clamp z to [-100, 100]
-    return 1 / (1 + math.pow(math.e, -z))
+    try :
+        return 1 / (1 + math.exp(-z))
+    except OverflowError:
+        return EPSILON if z < 0 else 1.0 - EPSILON
 
 
 # g(θ^T x) the T comes from transpose, so transpose theta and multiply by x
@@ -29,20 +34,16 @@ def hypothesis(theta_vec, x_vec) -> float:
 
 # The cost/loss for of an estimate of whether or not a student belongs to
 # the house these weights are trained to predict
-def cost(theta_vec, x_vec, y) -> float:
+def cost(h, y) -> float:
     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
-
     # x_vec : the subject grades for the student
     # y     : the answer, 1 if yes the student i part of this house, 0 if not
 
     # the model's estimate for the probability of a student 
     # belongin to the house the weights are trained on
-    h = hypothesis(theta_vec, x_vec)
+    # h = hypothesis(theta_vec, x_vec)
 
-    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
-
-def cost(h, y) -> float:
-    '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
+    h = max(min(h, 1 - EPSILON), EPSILON)
     return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 
@@ -63,9 +64,6 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
     # all_houses = df["Hogwarts House"].unique()
     all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
     feature_cols = df.select_dtypes(include='number').columns
-    num_features = len(feature_cols)
-
-    num_students = len(df)
 
     weights_per_house = pd.DataFrame(
         data=0,
@@ -76,16 +74,29 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
     ans_per_house = pd.get_dummies(df["Hogwarts House"])
     df = df.drop(columns=["Hogwarts House"])
 
+    loss_per_house = pd.DataFrame(
+        data=0,
+        index=[],
+        columns=all_houses
+    )
 
     for generation in range(num_iterations):
+        loss_row = {}
         for house in all_houses:
             w_vec = weights_per_house[house].values
             y_vec = ans_per_house[house].values
 
-            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns")
-            # loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
- 
+            # we take each row and apply the funciton to it, so it's one per data entry
+            # each row is a student
+            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns").values
+            loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
+
+            loss_row[house] = -1 * mean(loss)
+
+            # each value is the result of the prediction sloped depending on if it was correct or not
+            # each row is a student, and their prediction
             h_y_diff = h_vec - y_vec
+            loss_row[house] = h_y_diff.mean()
 
             gradients = pd.DataFrame(data=0.0, index=feature_cols, columns=[0])
 
@@ -93,12 +104,26 @@ def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
                 x_j = df[feature].values
                 gradients.loc[feature, 0] = (h_y_diff * x_j).mean()
 
-            weights_per_house[house] = weights_per_house[house] - learning_rate * gradients[0]
+            weights_per_house[house] = weights_per_house[house].values - learning_rate * gradients.values
             # print(weights_per_house)
 
-    return weights_per_house
+        loss_per_house.loc[generation] = loss_row
+
+    return weights_per_house, loss_per_house
 
 
+# To train the model, I need to iteratate over the full dataset, and each time training the prediciton
+# of every house individually. So my model have 4 weights, one for a prediciton for each house. The 
+# final result is takes at the highest certenty for each student.
+
+# My previous attemps have all have issues with a negative loss function, and the results 
+# just made no sense!
+
+# 
+
+#def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
+
+#    pass
 
 if __name__ == "__main__":
     print("Let's train the model to predict the correct house!")
@@ -117,8 +142,17 @@ if __name__ == "__main__":
 
     df = cleanUpData(data)
 
-    weights = train(df)
+    weights, loss = train(df)
 
     print(weights)
 
+
     saveWeightsToFile(weights)
+
+
+    loss.plot(figsize=(10, 6), title="Training Loss per House")
+    plt.xlabel("Iteration")
+    plt.ylabel("Average Loss")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

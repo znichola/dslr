@@ -6,4 +6,5 @@ __pycache__
 .venv
 datasets
 weights.csv
+houses.csv
 en.subject.pdf
