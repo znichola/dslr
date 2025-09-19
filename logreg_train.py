@@ -6,19 +6,24 @@ from describe import loadData, trainDataFilePath, mean
 import matplotlib.pyplot as plt
 import numpy as np
 
+EPSILON = 1e-15
+
+
 def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> None:
     try:
         weights.to_csv(file_path)
         print(f"Weights saved to {file_path}")
-    except:
-        print(f"Error: Could not save weights to '{file_path}'")
+    except e:
+        print(f"Error: Could not save weights to '{file_path}' : {e}")
 
 
 # Sigmoid function that places all inputs between 0 and 1
 def sigmoid(z) -> float:
     '''g(z) = 1 / (1 + e-z)'''
-    z = max(min(z, 100), -100)  # clamp z to [-100, 100]
-    return 1 / (1 + math.exp(-z))
+    try:
+        return 1 / (1 + math.exp(-z))
+    except OverflowError:
+        return EPSILON if z < 0 else 1.0 - EPSILON
 
 
 # g(θ^T x) the T comes from transpose, so transpose theta and multiply by x
@@ -30,28 +35,17 @@ def hypothesis(theta_vec, x_vec) -> float:
 
 # The cost/loss for of an estimate of whether or not a student belongs to
 # the house these weights are trained to predict
-# def cost(theta_vec, x_vec, y) -> float:
-#     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
-
-#     # x_vec : the subject grades for the student
-#     # y     : the answer, 1 if yes the student i part of this house, 0 if not
-
-#     # the model's estimate for the probability of a student 
-#     # belongin to the house the weights are trained on
-#     h = hypothesis(theta_vec, x_vec)
-#     if h <= 0 or h >= 1:
-#         print(f"Suspicious h: {h}, y: {y}")
-#     epsilon = 1e-15
-#     h = max(min(h, 1 - epsilon), epsilon)
-#     return - (y * math.log(h)) + ((1 - y) * math.log(1 - h))
-
 def cost(h, y) -> float:
     '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
-    if h <= 0 or h >= 1:
-        print(f"Suspicious h: {h}, y: {y}")
-    epsilon = 1e-15
-    h = max(min(h, 1 - epsilon), epsilon)
-    return - (y * math.log(h)) + ((1 - y) * math.log(1 - h))
+    # x_vec : the subject grades for the student
+    # y     : the answer, 1 if yes the student i part of this house, 0 if not
+
+    # the model's estimate for the probability of a student
+    # belongin to the house the weights are trained on
+    # h = hypothesis(theta_vec, x_vec)
+
+    h = max(min(h, 1 - EPSILON), EPSILON)
+    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
 
 
 def partial_derivative(h, y, j):
@@ -79,7 +73,7 @@ def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]
     return normalized_dataset, feature_mean, feature_std
 
 
-def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
+def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
     # all_houses = df["Hogwarts House"].unique()
     all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
     feature_cols = df.select_dtypes(include='number').columns
@@ -95,15 +89,29 @@ def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
     ans_per_house = pd.get_dummies(df["Hogwarts House"])
     df = df.drop(columns=["Hogwarts House"])
 
-    loss_history = {house: [] for house in all_houses}
+    loss_per_house = pd.DataFrame(
+        data=0,
+        index=[],
+        columns=all_houses
+    )
 
-    X = df.values  # shape: (m, n)
-    Y = ans_per_house.values  # shape: (m, k)
+    for generation in range(num_iterations):
+        loss_row = {}
+        for house in all_houses:
+            w_vec = weights_per_house[house].values
+            y_vec = ans_per_house[house].values
 
-    for iteration in range(num_iterations):
-        for house_idx, house in enumerate(all_houses):
-            theta = weights_per_house[house].values  # shape: (n,)
-            y = Y[:, house_idx]  # shape: (m,)
+            # we take each row and apply the funciton to it, so it's one per data entry
+            # each row is a student
+            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns").values
+            loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
+
+            loss_row[house] = -1 * mean(loss)
+
+            # each value is the result of the prediction sloped depending on if it was correct or not
+            # each row is a student, and their prediction
+            h_y_diff = h_vec - y_vec
+            loss_row[house] = h_y_diff.mean()
 
             # Compute predictions for all students
             z = X @ theta  # shape: (m,)
@@ -115,16 +123,26 @@ def train(df: pd.DataFrame, learning_rate = 0.1, num_iterations = 100):
             loss = - (y * np.log(h) + (1 - y) * np.log(1 - h))
             loss_history[house].append(np.mean(loss))
 
-            # Compute gradient
-            gradient = (1 / num_students) * (X.T @ (h - y))  # shape: (n,)
+            weights_per_house[house] = weights_per_house[house].values - learning_rate * gradients.values
+            # print(weights_per_house)
 
-            # Update weights
-            weights_per_house[house] = theta - learning_rate * gradient
+        loss_per_house.loc[generation] = loss_row
 
-    return weights_per_house, pd.DataFrame(loss_history)
-
+    return weights_per_house, loss_per_house
 
 
+# To train the model, I need to iteratate over the full dataset, and each time training the prediciton
+# of every house individually. So my model have 4 weights, one for a prediciton for each house. The 
+# final result is takes at the highest certenty for each student.
+
+# My previous attemps have all have issues with a negative loss function, and the results 
+# just made no sense!
+
+# 
+
+#def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
+
+#    pass
 
 if __name__ == "__main__":
     print("Let's train the model to predict the correct house!")
@@ -143,7 +161,7 @@ if __name__ == "__main__":
 
     df, feature_mean, feature_std = normalizeData(cleanUpData(data))
 
-    df.insert(0, 'Bias', 1.0)
+    weights, loss = train(df)
 
     print(df)
 
@@ -154,8 +172,9 @@ if __name__ == "__main__":
 
     weights['Mean'] = feature_mean.values
     weights['Std'] = feature_std.values
-    
+
     print(weights)
+
 
     saveWeightsToFile(weights)
 
