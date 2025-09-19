@@ -13,8 +13,8 @@ def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> 
     try:
         weights.to_csv(file_path)
         print(f"Weights saved to {file_path}")
-    except e:
-        print(f"Error: Could not save weights to '{file_path}' : {e}")
+    except:
+        print(f"Error: Could not save weights to '{file_path}'")
 
 
 # Sigmoid function that places all inputs between 0 and 1
@@ -54,11 +54,13 @@ def partial_derivative(h, y, j):
 
 
 def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
-    drop_classes = ['Arithmancy', 'Defense Against the Dark Arts', 'Transfiguration', 'Care of Magical Creatures', 'Flying']
+    drop_classes = ['Arithmancy', 'Defense Against the Dark Arts',
+                    'Transfiguration', 'Care of Magical Creatures', 'Flying']
     unused = ['First Name', 'Last Name', 'Birthday', 'Best Hand']
     columns_to_drop = ['Index'] + drop_classes + unused
 
-    return df.drop(columns=columns_to_drop).dropna() # also drop lines with missing data
+    # also drop lines with missing data
+    return df.drop(columns=columns_to_drop).dropna()
 
 
 def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
@@ -75,7 +77,8 @@ def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]
 
 def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
     # all_houses = df["Hogwarts House"].unique()
-    all_houses = ['Ravenclaw', 'Slytherin', 'Gryffindor', 'Hufflepuff'] # for type hints
+    all_houses = ['Ravenclaw', 'Slytherin',
+                  'Gryffindor', 'Hufflepuff']  # for type hints
     feature_cols = df.select_dtypes(include='number').columns
     num_features = len(feature_cols)
     num_students = len(df)
@@ -103,7 +106,8 @@ def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
 
             # we take each row and apply the funciton to it, so it's one per data entry
             # each row is a student
-            h_vec = df.apply(lambda x : hypothesis(w_vec, x), axis="columns").values
+            h_vec = df.apply(lambda x: hypothesis(
+                w_vec, x), axis="columns").values
             loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
 
             loss_row[house] = -1 * mean(loss)
@@ -123,7 +127,8 @@ def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
             loss = - (y * np.log(h) + (1 - y) * np.log(1 - h))
             loss_history[house].append(np.mean(loss))
 
-            weights_per_house[house] = weights_per_house[house].values - learning_rate * gradients.values
+            weights_per_house[house] = weights_per_house[house].values - \
+                learning_rate * gradients.values
             # print(weights_per_house)
 
         loss_per_house.loc[generation] = loss_row
@@ -132,15 +137,15 @@ def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
 
 
 # To train the model, I need to iteratate over the full dataset, and each time training the prediciton
-# of every house individually. So my model have 4 weights, one for a prediciton for each house. The 
+# of every house individually. So my model have 4 weights, one for a prediciton for each house. The
 # final result is takes at the highest certenty for each student.
 
-# My previous attemps have all have issues with a negative loss function, and the results 
+# My previous attemps have all have issues with a negative loss function, and the results
 # just made no sense!
 
-# 
+#
 
-#def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
+# def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
 
 #    pass
 
@@ -174,7 +179,6 @@ if __name__ == "__main__":
     weights['Std'] = feature_std.values
 
     print(weights)
-
 
     saveWeightsToFile(weights)
 
