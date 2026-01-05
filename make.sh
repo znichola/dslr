@@ -7,20 +7,7 @@ fetch() {
 }
 
 venv() {
-
-    IN_SCHOOL="$(echo $SESSION_MANAGER | grep 42 | wc --lines)"
-
-    VENV="python3 -m venv"
-
-    if [[ IN_SCHOOL == 1 ]]; then
-        VENV="virtualenv .venv"
-    fi 
-
-    $VENV .venv \
-        && source .venv/bin/activate \
-        && pip install --upgrade pip \
-        && pip install -r requirements.txt
-
+    uv sync
     echo "ℹ️ To activate the venv run : source .venv/bin/activate"
     echo "ℹ️ To activate the venv run : .\.venv\Scripts\activate"
 }
