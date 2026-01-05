@@ -10,18 +10,38 @@ Then we build a classifier using a logistic regression, and assign students to o
 
 As for "ft_linear_regression" the [google ml crashcourse](https://developers.google.com/machine-learning/crash-course/logistic-regression) is great.
 
-## Encoding dates
+# Getting started
+
+We use [uv](https://docs.astral.sh/uv/getting-started/installation/) for python package managment and venv. It's a simple install script from their website, and it's fast!
+
+Then you can run:
+```bash
+./make.sh fetch
+# .. this will fetch the project data, (so long as the urls has not changed)
+
+./make.sh venv
+# .. this will make the venv, (required uv to be installed)
+
+source .venv/bin/activate
+# .. this will activate the python venv for you shell instance
+
+./make.sh jupyter
+# .. this will launch the jupyter server so you can view the code notebooks (`.ipynb`) files. 
+```
+
+# Encoding dates
 
 It's complicated and you can extract various bit of data from them, it could be: age, or the month as a cyclic thing, you could imaging it's related to the astological sign for instance. This article talks about [how to reprisent cyclic time based information](https://developer.nvidia.com/blog/three-approaches-to-encoding-time-information-as-features-for-ml-models/).
 
 
-## TODO
+# TODO
 
 - [ ] error handelling in describe
-- [ ] bonus fields for describe
-- [ ] readme with setup instructions, (install uv, ./make.sh etc..)
+- [x] bonus fields for describe
+- [x] readme with setup instructions, (install uv, ./make.sh etc..)
 - [ ] for train
+- [ ]  - implement the train algo
 - [ ]  - decide what to do when training with empty data in one column
-- [ ]  - how to handle data normalization
-- [ ]  - do we use numpy? pandas? or just raw python
+- [x]  - how to handle data normalization
+- [x]  - do we use numpy? pandas? or just raw python
 - [ ]  - sigmoid with very big or small number, how should it be handled
