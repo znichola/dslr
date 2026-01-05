@@ -1,7 +1,7 @@
 #!/bin/bash
 
 fetch() {
-    wget https://cdn.intra.42.fr/document/document/34001/datasets.tgz
+    wget https://cdn.intra.42.fr/document/document/36253/datasets.tgz
     tar -xf datasets.tgz
     rm datasets.tgz
 }
