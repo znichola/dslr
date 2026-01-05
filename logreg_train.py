@@ -16,7 +16,6 @@ def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> 
     except:
         print(f"Error: Could not save weights to '{file_path}'")
 
-
 # Sigmoid function that places all inputs between 0 and 1
 def sigmoid(z) -> float:
     '''g(z) = 1 / (1 + e-z)'''
@@ -57,34 +56,28 @@ def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
     drop_classes = ['Arithmancy', 'Defense Against the Dark Arts',
                     'Transfiguration', 'Care of Magical Creatures', 'Flying']
     unused = ['First Name', 'Last Name', 'Birthday', 'Best Hand']
-    columns_to_drop = ['Index'] + drop_classes + unused
+    columns_to_drop = ['Indexs'] + drop_classes + unused
 
     # also drop lines with missing data
-    return df.drop(columns=columns_to_drop).dropna()
+    return df.drop(columns=columns_to_drop, errors="ignore").dropna()
 
 
 def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
-    feature_mean = df.mean(numeric_only=True)
-    feature_std = df.std(numeric_only=True)
-    numerical_features = df.select_dtypes('number').columns
-    normalized_dataset = (
-        df[numerical_features] - feature_mean
-    ) / feature_std
-
-    normalized_dataset['Hogwarts House'] = df['Hogwarts House']
-    return normalized_dataset, feature_mean, feature_std
-
-def normalize(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
 
     subjects = df.select_dtypes(include=["number"]).columns
 
     df_copy = df.copy()
+    xmindict = {}
+    xrangedict = {}
 
     tmp, _ = describe(df)
 
     for course in subjects:
+        
         xmin = tmp[course]["Min"]
         xrange = tmp[course]["Range"]
+        xmindict[course] = xmin
+        xrangedict[course] = xrange
         if xrange == 0:
             df_copy[course] = [1] * len(df_copy[course])
         else:
@@ -92,7 +85,7 @@ def normalize(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
 
     print(df_copy)
 
-    return df_copy
+    return df_copy, xmindict, xrangedict
 
 
 
@@ -185,11 +178,13 @@ if __name__ == "__main__":
     if data is None:
         exit(1)
 
-    df, feature_mean, feature_std = normalizeData(cleanUpData(data))
+    df, feature_min, feature_range = normalizeData(cleanUpData(data))
+
+    print(df)
+    exit(0)
 
     weights, loss = train(df)
 
-    print(df)
 
     weights, loss = train(df)
 

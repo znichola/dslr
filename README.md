@@ -44,4 +44,4 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [ ]  - decide what to do when training with empty data in one column
 - [x]  - how to handle data normalization
 - [x]  - do we use numpy? pandas? or just raw python
-- [ ]  - sigmoid with very big or small number, how should it be handled
+- [x]  - sigmoid with very big or small number, how should it be handled
