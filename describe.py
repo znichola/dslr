@@ -85,7 +85,9 @@ def describe(df: pd.DataFrame):
         "25%": [],
         "50%": [],
         "75%": [],
-        "Max": []
+        "Max": [],
+        "Missing": [],
+        "Range" : [],
     }
 
     numeric_columns = df.select_dtypes(include=["number"]).columns
@@ -101,11 +103,25 @@ def describe(df: pd.DataFrame):
         summary["50%"].append(median(col_data))
         summary["75%"].append(q3)
         summary["Max"].append(max(col_data))
+        summary['Missing'].append(len(df[col]) - len(col_data))
+        summary['Range'].append(max(col_data) - min(col_data))
 
     # .T transposes the dataFrame
     summary_df = pd.DataFrame(summary, index=numeric_columns).T
 
-    return summary_df.to_string(float_format="%.6f")
+    return summary, summary_df.to_string(float_format="%.6f")
+
+
+def dec_by_house(df: pd.DataFrame):
+    houses = df["Hogwarts House"].dropna().unique()
+
+    stock = {}
+
+    for house in houses:
+        _, ss = describe(df[df["Hogwarts House"] == house])
+        stock[house] = ss
+    
+    return stock
 
 
 if __name__ == "__main__":
@@ -113,20 +129,25 @@ if __name__ == "__main__":
         print("Error: Please provide a valid file path")
         exit(1)
 
-    # try:
-    df = loadData(sys.argv[1])
-    if df is None:
-        raise ValueError("loadData returned None")
-    
-    # df = df.drop(columns=['Index', 'index'], errors='ignore')
+    try:
+        df = loadData(sys.argv[1])
+        if df is None:
+            raise ValueError("loadData returned None")
+        
+        _, desc_string = describe(df)
 
-    print(df)
+        print("Global dataset")
+        print(desc_string)
 
-    print(describe(df))
+        house_dict = dec_by_house(df)
 
-    # print("\n\n")
-        # print(df.describe())
+        for hd in house_dict.items():
+            house, dec_string = hd
 
-    # except Exception:
-    #     print("Error: Failed to process or describe the dataset")
-    #     exit(1)
+            print()
+            print(house)
+            print(dec_string)
+
+    except Exception:
+        print("Error: Failed to process or describe the dataset")
+        exit(1)
