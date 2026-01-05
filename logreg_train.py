@@ -2,7 +2,7 @@ import os
 import sys
 import math
 import pandas as pd
-from describe import loadData, trainDataFilePath, mean
+from describe import loadData, trainDataFilePath, mean, describe
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -73,6 +73,27 @@ def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]
 
     normalized_dataset['Hogwarts House'] = df['Hogwarts House']
     return normalized_dataset, feature_mean, feature_std
+
+def normalize(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
+
+    subjects = df.select_dtypes(include=["number"]).columns
+
+    df_copy = df.copy()
+
+    tmp, _ = describe(df)
+
+    for course in subjects:
+        xmin = tmp[course]["Min"]
+        xrange = tmp[course]["Range"]
+        if xrange == 0:
+            df_copy[course] = [1] * len(df_copy[course])
+        else:
+            df_copy[course] = [(x - xmin) / xrange for x in df_copy[course]]
+
+    print(df_copy)
+
+    return df_copy
+
 
 
 def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):

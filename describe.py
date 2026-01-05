@@ -109,7 +109,7 @@ def describe(df: pd.DataFrame):
     # .T transposes the dataFrame
     summary_df = pd.DataFrame(summary, index=numeric_columns).T
 
-    return summary, summary_df.to_string(float_format="%.6f")
+    return summary_df, summary_df.to_string(float_format="%.6f")
 
 
 def dec_by_house(df: pd.DataFrame):
@@ -134,6 +134,7 @@ if __name__ == "__main__":
         if df is None:
             raise ValueError("loadData returned None")
         
+        # df = df.drop(columns=["Index"])
         _, desc_string = describe(df)
 
         print("Global dataset")
