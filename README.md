@@ -36,12 +36,18 @@ It's complicated and you can extract various bit of data from them, it could be:
 
 # TODO
 
-- [ ] error handelling in describe
+- [ ] error handelling everywhere
 - [x] bonus fields for describe
 - [x] readme with setup instructions, (install uv, ./make.sh etc..)
 - [ ] for train
 - [x]  - implement the train algo
-- [ ]  - decide what to do when training with empty data in one column
+- [x]  - decide what to do when training with empty data in one column
 - [x]  - how to handle data normalization
 - [x]  - do we use numpy? pandas? or just raw python
 - [x]  - sigmoid with very big or small number, how should it be handled
+- [ ] arguemnt for train and predict
+- [ ] bonus algo, stochastic gradient descent
+- [ ] bonus optimization algo, batch, mini batch
+- [ ] bonus find 3rd bonus optimization algo
+- [ ] final tests from shool repo and fresh folder
+- [ ] push and eval

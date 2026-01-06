@@ -22,4 +22,4 @@ if __name__ == "__main__":
     ax.grid(True)
 
     fig.tight_layout()
-    # plt.show()
+    plt.show()
