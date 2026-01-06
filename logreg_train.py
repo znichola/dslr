@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     lr = logistic_regression("datasets/2.csv")
-    lr.learning_rate = 0.1
-    lr.max_epoch = 3000
-    lr.batch = 1
+    lr.learning_rate = 1
+    lr.max_epoch = 1000
+    lr.batch = 200
     lr.train()
     lr.save()
 

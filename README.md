@@ -39,7 +39,7 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [ ] error handelling everywhere
 - [x] bonus fields for describe
 - [x] readme with setup instructions, (install uv, ./make.sh etc..)
-- [ ] for train
+- [x] for train
 - [x]  - implement the train algo
 - [x]  - decide what to do when training with empty data in one column
 - [x]  - how to handle data normalization
@@ -49,5 +49,10 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [ ] bonus algo, stochastic gradient descent
 - [ ] bonus optimization algo, batch, mini batch
 - [ ] bonus find 3rd bonus optimization algo
+- [ ] reorder code so it's logical for explication
 - [ ] final tests from shool repo and fresh folder
 - [ ] push and eval
+
+- [ ] batch things
+- [ ]  - batch bigger than dataset size
+- [ ]  - last batch is less than batch size

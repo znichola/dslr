@@ -20,7 +20,7 @@ class logistic_regression:
         self._loss_history = {h: [] for h in self._houses}
         self.learning_rate = 0.1
         self.max_epoch = 100
-        self.batch = 1
+        self.batch = 0
 
         if model:
             self._houses = model["houses"]
@@ -76,13 +76,19 @@ class logistic_regression:
 
     def train(self):
         for ep in range(self.max_epoch):
-            for i, house in enumerate(self._houses):
-                self._weights[i] = self.gradient_descent(self._weights[i], house)
+            batches = self.generate_batches()
+            for batch in batches:
+                for i, house in enumerate(self._houses):
+                    self._weights[i] = self.gradient_descent(self._weights[i], house, batch)
             
             if ep % 100:
                 predictions =  self.predict()
                 accuracy = sum(c == p for c, p in zip(self._houses_data, predictions)) / len(predictions)
                 print(f"Epoch {ep}: accuracy = {accuracy:.4%}")
+                for i, house in enumerate(self._houses):
+                    y = [1 if house == h else 0 for h in self._houses_data]
+                    current_loss = self.loss(self._weights[i], self._data, y)
+                    self._loss_history[house].append(current_loss)
 
 
     def loss(self, theta, x__, y_):
@@ -96,9 +102,10 @@ class logistic_regression:
         return -total / m
 
 
-    def gradient_descent(self, weights, house_to_predict):
+    def gradient_descent(self, weights, house_to_predict, batch):
         theta = weights
-        x__ = self._data
+        start, stop = batch
+        x__ = self._data[start : stop]
         y_ = [1 if house_to_predict == h else 0 for h in self._houses_data]
         # current_loss = self.loss(weights, x__, y_)
         # self._loss_history[house_to_predict].append(current_loss)
@@ -124,6 +131,13 @@ class logistic_regression:
 
     def sigmoid(self, z):
         return 1 / (1+ math.exp(-z))
+
+
+    def generate_batches(self):
+        m = len(self._data)
+        b = self.batch
+        return [(i, min(i + b, m)) for i in range(0, m, b)]
+
 
     def save(self, file_path: str = "model.pkl"):
         try:
