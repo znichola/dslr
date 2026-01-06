@@ -4,13 +4,14 @@ import math
 
 class logistic_regression:
 
-    def __init__(self, path):
+    def __init__(self, path, istrain=True):
         self.path = path
         self.columns_to_drop = ['Arithmancy', 'Defense Against the Dark Arts',
                         'Transfiguration', 'Care of Magical Creatures', 'Flying', 
                         'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index']
         self._normalize = []
         df = self.loadData()
+        df = self.dropna(df) if istrain else self.fillna(df)
         self._houses_data = df.pop("Hogwarts House")
         self._data = self.dfToArray(df.transpose())
         self._subjects = list(df.keys())
@@ -23,6 +24,7 @@ class logistic_regression:
 
     def loadData(self):
         df = loadData(self.path)
+        df["Hogwarts House"] = df["Hogwarts House"].fillna("No house")
         df = self.cleanUpData(df)
         df = self.normalizeData(df)
         return df
@@ -34,7 +36,14 @@ class logistic_regression:
         return [d for d in subject_dict.values()]
 
     def cleanUpData(self, df):
-        return df.drop(columns=self.columns_to_drop, errors="ignore").dropna()
+        # return df.drop(columns=self.columns_to_drop, errors="ignore").dropna()
+        return df.drop(columns=self.columns_to_drop, errors="ignore")
+    
+    def dropna(self, df):
+        return df.dropna()
+    
+    def fillna(self, df):
+        return df.fillna(df.mean(numeric_only=True))
 
     def normalizeData(self, df):
 
@@ -47,7 +56,6 @@ class logistic_regression:
         tmp, _ = describe(df)
 
         for course in subjects:
-            
             xmin = tmp[course]["Min"]
             xrange = tmp[course]["Range"]
             self._normalize.append((xmin, xrange))
@@ -109,7 +117,6 @@ class logistic_regression:
         return self.sigmoid(z)
 
     def sigmoid(self, z):
-        '''Sigmoid = 1 / (1 + e-z)'''
         return 1 / (1+ math.exp(-z))
 
     def save(self, file_path: str = "model.pkl"):

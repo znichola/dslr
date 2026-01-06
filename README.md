@@ -40,7 +40,7 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [x] bonus fields for describe
 - [x] readme with setup instructions, (install uv, ./make.sh etc..)
 - [ ] for train
-- [ ]  - implement the train algo
+- [x]  - implement the train algo
 - [ ]  - decide what to do when training with empty data in one column
 - [x]  - how to handle data normalization
 - [x]  - do we use numpy? pandas? or just raw python
