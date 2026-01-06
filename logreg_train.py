@@ -1,206 +1,25 @@
-import os
-import sys
-import math
-import pandas as pd
-from describe import loadData, trainDataFilePath, mean, describe
+from logistic_regression import logistic_regression
 import matplotlib.pyplot as plt
-import numpy as np
 
-EPSILON = 1e-15
-
-
-def saveWeightsToFile(weights: pd.DataFrame, file_path: str = "weights.csv") -> None:
-    try:
-        weights.to_csv(file_path)
-        print(f"Weights saved to {file_path}")
-    except:
-        print(f"Error: Could not save weights to '{file_path}'")
-
-# Sigmoid function that places all inputs between 0 and 1
-def sigmoid(z) -> float:
-    '''g(z) = 1 / (1 + e-z)'''
-    try:
-        return 1 / (1 + math.exp(-z))
-    except OverflowError:
-        return EPSILON if z < 0 else 1.0 - EPSILON
-
-
-# g(θ^T x) the T comes from transpose, so transpose theta and multiply by x
-#          like a dot product t0*x0 + t1*x1 ... tn*xn
-def hypothesis(theta_vec, x_vec) -> float:
-    '''[θ^T * x] == [θ dot product x]'''
-    return sigmoid(sum(theta * x for theta, x in zip(theta_vec, x_vec)))
-
-
-# The cost/loss for of an estimate of whether or not a student belongs to
-# the house these weights are trained to predict
-def cost(h, y) -> float:
-    '''y_i * log(hθ(x_i)) + (1-y_i) * log(1-hθ(x_i))'''
-    # x_vec : the subject grades for the student
-    # y     : the answer, 1 if yes the student i part of this house, 0 if not
-
-    # the model's estimate for the probability of a student
-    # belongin to the house the weights are trained on
-    # h = hypothesis(theta_vec, x_vec)
-
-    h = max(min(h, 1 - EPSILON), EPSILON)
-    return (y * math.log(h)) + ((1 - y) * math.log(1 - h))
-
-
-def partial_derivative(h, y, j):
-    '''(hθ(x_i) - y_i) * x_i_j'''
-    return (h - y) * j
-
-
-def cleanUpData(df: pd.DataFrame) -> pd.DataFrame:
-    drop_classes = ['Arithmancy', 'Defense Against the Dark Arts',
-                    'Transfiguration', 'Care of Magical Creatures', 'Flying']
-    unused = ['First Name', 'Last Name', 'Birthday', 'Best Hand']
-    columns_to_drop = ['Indexs'] + drop_classes + unused
-
-    # also drop lines with missing data
-    return df.drop(columns=columns_to_drop, errors="ignore").dropna()
-
-
-def normalizeData(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
-
-    subjects = df.select_dtypes(include=["number"]).columns
-
-    df_copy = df.copy()
-    xmindict = {}
-    xrangedict = {}
-
-    tmp, _ = describe(df)
-
-    for course in subjects:
-        
-        xmin = tmp[course]["Min"]
-        xrange = tmp[course]["Range"]
-        xmindict[course] = xmin
-        xrangedict[course] = xrange
-        if xrange == 0:
-            df_copy[course] = [1] * len(df_copy[course])
-        else:
-            df_copy[course] = [(x - xmin) / xrange for x in df_copy[course]]
-
-    print(df_copy)
-
-    return df_copy, xmindict, xrangedict
-
-
-
-def train(df: pd.DataFrame, learning_rate=0.1, num_iterations=100):
-    # all_houses = df["Hogwarts House"].unique()
-    all_houses = ['Ravenclaw', 'Slytherin',
-                  'Gryffindor', 'Hufflepuff']  # for type hints
-    feature_cols = df.select_dtypes(include='number').columns
-    num_features = len(feature_cols)
-    num_students = len(df)
-
-    weights_per_house = pd.DataFrame(
-        data=0.0,
-        index=feature_cols,
-        columns=all_houses
-    )
-
-    ans_per_house = pd.get_dummies(df["Hogwarts House"])
-    df = df.drop(columns=["Hogwarts House"])
-
-    loss_per_house = pd.DataFrame(
-        data=0,
-        index=[],
-        columns=all_houses
-    )
-
-    for generation in range(num_iterations):
-        loss_row = {}
-        for house in all_houses:
-            w_vec = weights_per_house[house].values
-            y_vec = ans_per_house[house].values
-
-            # we take each row and apply the funciton to it, so it's one per data entry
-            # each row is a student
-            h_vec = df.apply(lambda x: hypothesis(
-                w_vec, x), axis="columns").values
-            loss = [cost(h, y) for h, y in zip(h_vec, y_vec)]
-
-            loss_row[house] = -1 * mean(loss)
-
-            # each value is the result of the prediction sloped depending on if it was correct or not
-            # each row is a student, and their prediction
-            h_y_diff = h_vec - y_vec
-            loss_row[house] = h_y_diff.mean()
-
-            # Compute predictions for all students
-            z = X @ theta  # shape: (m,)
-            h = 1 / (1 + np.exp(-np.clip(z, -100, 100)))  # sigmoid vectorized
-
-            # Compute loss
-            epsilon = 1e-15
-            h = np.clip(h, epsilon, 1 - epsilon)
-            loss = - (y * np.log(h) + (1 - y) * np.log(1 - h))
-            loss_history[house].append(np.mean(loss))
-
-            weights_per_house[house] = weights_per_house[house].values - \
-                learning_rate * gradients.values
-            # print(weights_per_house)
-
-        loss_per_house.loc[generation] = loss_row
-
-    return weights_per_house, loss_per_house
-
-
-# To train the model, I need to iteratate over the full dataset, and each time training the prediciton
-# of every house individually. So my model have 4 weights, one for a prediciton for each house. The
-# final result is takes at the highest certenty for each student.
-
-# My previous attemps have all have issues with a negative loss function, and the results
-# just made no sense!
-
-#
-
-# def train(df: pd.DataFrame, learning_rate = 0.05, num_iterations = 60):
-
-#    pass
 
 if __name__ == "__main__":
-    print("Let's train the model to predict the correct house!")
-    print()
+    lr = logistic_regression("datasets/2.csv")
+    lr.learning_rate = 0.1
+    lr.max_epoch = 3000
+    lr.batch = 1
+    lr.train()
+    lr.save()
 
-    # if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
-    #     print("Error: Please provide a valid file path for data")
-    #     exit(1)
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    # data_path = sys.argv[1]
+    for house, losses in lr._loss_history.items():
+        ax.plot(losses, label=house)
 
-    # TODO : switch to using args for path
-    data = loadData(trainDataFilePath())
-    if data is None:
-        exit(1)
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Log Loss")
+    ax.set_title("Logistic Regression Training Loss per House")
+    ax.legend()
+    ax.grid(True)
 
-    df, feature_min, feature_range = normalizeData(cleanUpData(data))
-
-    print(df)
-    exit(0)
-
-    weights, loss = train(df)
-
-
-    weights, loss = train(df)
-
-    feature_mean['Bias'] = 0.0
-    feature_std['Bias'] = 1.0
-
-    weights['Mean'] = feature_mean.values
-    weights['Std'] = feature_std.values
-
-    print(weights)
-
-    saveWeightsToFile(weights)
-
-    loss.plot(figsize=(10, 6), title="Training Loss per House")
-    plt.xlabel("Iteration")
-    plt.ylabel("Average Loss")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    fig.tight_layout()
+    # plt.show()
