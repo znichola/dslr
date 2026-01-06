@@ -5,6 +5,5 @@ __pycache__
 
 .venv
 datasets
-weights.csv
-houses.csv
+weights.pkl
 en.subject.pdf

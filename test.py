@@ -1,7 +1,6 @@
 from describe import loadData, describe
-import matplotlib.pyplot as plt
+import pickle
 import math
-import sys
 
 class logistic_regression:
 
@@ -10,19 +9,17 @@ class logistic_regression:
         self.columns_to_drop = ['Arithmancy', 'Defense Against the Dark Arts',
                         'Transfiguration', 'Care of Magical Creatures', 'Flying', 
                         'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index']
-        self.data = self.loadData()
-        self.houses_data = self.data.pop("Hogwarts House")
-        self.houses = list(set(self.houses_data))
-        self.subjects = list(self.data.keys())
+        self._normalize = []
+        self._data = self.loadData()
+        self._houses_data = self._data.pop("Hogwarts House")
+        self._houses = list(set(self._houses_data))
+        self._subjects = list(self._data.keys())
         self.dataToArray()
-        self.loss_history = {h: [] for h in self.houses}
+        self._weights = [[0 for _ in range(len(self._subjects))] for _ in self._houses]
+        self._loss_history = {h: [] for h in self._houses}
         self.learning_rate = 0.1
-        self.max_epoch = 100000
+        self.max_epoch = 100
         self.batch = 1
-
-        self.weights = [[0 for _ in range(len(self.subjects))] for _ in self.houses]
-
-        self.train()
 
     def loadData(self):
         df = loadData(self.path)
@@ -34,7 +31,7 @@ class logistic_regression:
         return subject_dict
 
     def dataToArray(self):
-        self.data = [d for d in self.data.values()]
+        self._data = [d for d in self._data.values()]
 
     def cleanUpData(self, df):
         return df.drop(columns=self.columns_to_drop, errors="ignore").dropna()
@@ -53,6 +50,7 @@ class logistic_regression:
             
             xmin = tmp[course]["Min"]
             xrange = tmp[course]["Range"]
+            self._normalize.append((xmin, xrange))
             xmindict[course] = xmin
             xrangedict[course] = xrange
             if xrange == 0:
@@ -65,19 +63,15 @@ class logistic_regression:
 
     def train(self):
         for _ in range(self.max_epoch):
-            for i, house in enumerate(self.houses):
-                self.weights[i] = self.gradient_descent(self.weights[i], house)
-                print(self.loss_history[house][-1])
-            print("-------------------------")
-        self.plot_loss()
-        self.save()
+            for i, house in enumerate(self._houses):
+                self._weights[i] = self.gradient_descent(self._weights[i], house)
+
 
     def loss(self, theta, x__, y_):
         m = len(y_)
         total = 0.0
         for x_, y in zip(x__, y_):
             h = self.hypothesis(theta, x_)
-            # numerical stability
             h = min(max(h, 1e-15), 1 - 1e-15)
             total += y * math.log(h) + (1 - y) * math.log(1 - h)
 
@@ -86,12 +80,11 @@ class logistic_regression:
 
     def gradient_descent(self, weights, house_to_predict):
         theta = weights
-        x__ = self.data
-        y_ = [1 if house_to_predict == h else 0 for h in self.houses_data]
+        x__ = self._data
+        y_ = [1 if house_to_predict == h else 0 for h in self._houses_data]
         current_loss = self.loss(weights, x__, y_)
-        self.loss_history[house_to_predict].append(current_loss)
+        self._loss_history[house_to_predict].append(current_loss)
         alpha = self.learning_rate
-        print(house_to_predict, " ", end="")
         gradient = self.gradient(theta, x__, y_)
 
         return [t - alpha * g for t, g in zip(theta, gradient)]
@@ -115,31 +108,15 @@ class logistic_regression:
         '''Sigmoid = 1 / (1 + e-z)'''
         return 1 / (1+ math.exp(-z))
 
-    def save(self):
-        return
-    
-    def plot_loss(self):
-        plt.figure(figsize=(10, 6))
-
-        for house, losses in self.loss_history.items():
-            plt.plot(losses, label=house)
-
-        plt.xlabel("Epoch")
-        plt.ylabel("Log Loss")
-        plt.title("Logistic Regression Training Loss per House")
-        plt.legend()
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-        
-
-
-
-if __name__ == "__main__":
-    logistic_regression("datasets/dataset_train.csv")
-    # try:
-    #     logistic_regression("datasets/dataset_train.csv")
-    # except Exception as err:
-    #     print(err)
-
+    def save(self, file_path: str = "weights.pkl"):
+        try:
+            data = {
+                "weights": self._weights,
+                "normlization": self._normalize,
+                "houses": self._houses
+            }
+            with open(file_path, "wb") as f:
+                pickle.dump(data, f)
+            print(f"Weights saved to {file_path}")
+        except:
+            print(f"Error: Could not save weights to '{file_path}'")

@@ -3,8 +3,7 @@ import sys
 import pandas as pd
 from describe import loadData, trainDataFilePath
 from logreg_train import hypothesis, cleanUpData, saveWeightsToFile
-import matplotlib.pyplot as plt
-
+ 
 
 def loadWeights(file_path="weights.csv") -> pd.DataFrame | None:
     return loadData(file_path)
