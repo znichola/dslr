@@ -10,11 +10,11 @@ class logistic_regression:
                         'Transfiguration', 'Care of Magical Creatures', 'Flying', 
                         'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index']
         self._normalize = []
-        self._data = self.loadData()
-        self._houses_data = self._data.pop("Hogwarts House")
+        df = self.loadData()
+        self._houses_data = df.pop("Hogwarts House")
+        self._data = self.dfToArray(df.transpose())
+        self._subjects = list(df.keys())
         self._houses = list(set(self._houses_data))
-        self._subjects = list(self._data.keys())
-        self.dataToArray()
         self._weights = [[0 for _ in range(len(self._subjects))] for _ in self._houses]
         self._loss_history = {h: [] for h in self._houses}
         self.learning_rate = 0.1
@@ -25,13 +25,13 @@ class logistic_regression:
         df = loadData(self.path)
         df = self.cleanUpData(df)
         df = self.normalizeData(df)
+        return df
+       
+    def dfToArray(self, df):
         subject_dict = df.to_dict()
         for subject_key in subject_dict.keys():
             subject_dict[subject_key] = [grade for grade in subject_dict[subject_key].values()]
-        return subject_dict
-
-    def dataToArray(self):
-        self._data = [d for d in self._data.values()]
+        return [d for d in subject_dict.values()]
 
     def cleanUpData(self, df):
         return df.drop(columns=self.columns_to_drop, errors="ignore").dropna()
@@ -62,9 +62,13 @@ class logistic_regression:
 
 
     def train(self):
-        for _ in range(self.max_epoch):
+        for ep in range(self.max_epoch):
             for i, house in enumerate(self._houses):
                 self._weights[i] = self.gradient_descent(self._weights[i], house)
+            
+            if ep % 10:
+                predictions =  self.predict()
+                print(sum([c == p for c, p in  zip(self._houses_data, predictions)])/len(predictions))
 
 
     def loss(self, theta, x__, y_):
@@ -120,3 +124,12 @@ class logistic_regression:
             print(f"Model saved to {file_path}")
         except:
             print(f"Error: Could not save model to '{file_path}'")
+
+    def predict(self):
+        predictions = []
+        for i, x in enumerate(self._data):
+            p = []
+            for house_index, _ in enumerate(self._houses):
+                p.append(self.hypothesis(self._weights[house_index], x))
+            predictions.append(self._houses[p.index(max(p))])
+        return predictions
