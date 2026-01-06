@@ -108,15 +108,15 @@ class logistic_regression:
         '''Sigmoid = 1 / (1 + e-z)'''
         return 1 / (1+ math.exp(-z))
 
-    def save(self, file_path: str = "weights.pkl"):
+    def save(self, file_path: str = "model.pkl"):
         try:
             data = {
                 "weights": self._weights,
-                "normlization": self._normalize,
+                "normalize": self._normalize,
                 "houses": self._houses
             }
             with open(file_path, "wb") as f:
                 pickle.dump(data, f)
-            print(f"Weights saved to {file_path}")
+            print(f"Model saved to {file_path}")
         except:
-            print(f"Error: Could not save weights to '{file_path}'")
+            print(f"Error: Could not save model to '{file_path}'")

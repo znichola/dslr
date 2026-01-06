@@ -1,4 +1,4 @@
-from test import logistic_regression
+from logistic_regression import logistic_regression
 import matplotlib.pyplot as plt
 
 
