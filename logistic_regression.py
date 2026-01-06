@@ -4,14 +4,14 @@ import math
 
 class logistic_regression:
 
-    def __init__(self, path, istrain=True):
+    def __init__(self, path, model=None):
         self.path = path
         self.columns_to_drop = ['Arithmancy', 'Defense Against the Dark Arts',
                         'Transfiguration', 'Care of Magical Creatures', 'Flying', 
                         'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index']
         self._normalize = []
-        df = self.loadData()
-        df = self.dropna(df) if istrain else self.fillna(df)
+        df = self.loadData(model)
+        df = self.dropna(df) if model is None else self.fillna(df)
         self._houses_data = df.pop("Hogwarts House")
         self._data = self.dfToArray(df.transpose())
         self._subjects = list(df.keys())
@@ -22,11 +22,15 @@ class logistic_regression:
         self.max_epoch = 100
         self.batch = 1
 
-    def loadData(self):
+        if model:
+            self._houses = model["houses"]
+            self._weights = model["weights"]
+
+    def loadData(self, model):
         df = loadData(self.path)
         df["Hogwarts House"] = df["Hogwarts House"].fillna("No house")
         df = self.cleanUpData(df)
-        df = self.normalizeData(df)
+        df = self.normalizeData(df, model)
         return df
        
     def dfToArray(self, df):
@@ -45,7 +49,7 @@ class logistic_regression:
     def fillna(self, df):
         return df.fillna(df.mean(numeric_only=True))
 
-    def normalizeData(self, df):
+    def normalizeData(self, df, model):
 
         subjects = df.select_dtypes(include=["number"]).columns
 
@@ -55,10 +59,11 @@ class logistic_regression:
 
         tmp, _ = describe(df)
 
-        for course in subjects:
-            xmin = tmp[course]["Min"]
-            xrange = tmp[course]["Range"]
-            self._normalize.append((xmin, xrange))
+        for i, course in enumerate(subjects):
+            xmin = tmp[course]["Min"] if model is None else model["normalize"][i][0]
+            xrange = tmp[course]["Range"] if model is None else model["normalize"][i][1]
+            if model is None:
+                self._normalize.append((xmin, xrange))
             xmindict[course] = xmin
             xrangedict[course] = xrange
             if xrange == 0:
@@ -74,9 +79,10 @@ class logistic_regression:
             for i, house in enumerate(self._houses):
                 self._weights[i] = self.gradient_descent(self._weights[i], house)
             
-            if ep % 10:
+            if ep % 100:
                 predictions =  self.predict()
-                print(sum([c == p for c, p in  zip(self._houses_data, predictions)])/len(predictions))
+                accuracy = sum(c == p for c, p in zip(self._houses_data, predictions)) / len(predictions)
+                print(f"Epoch {ep}: accuracy = {accuracy:.4%}")
 
 
     def loss(self, theta, x__, y_):
@@ -94,8 +100,8 @@ class logistic_regression:
         theta = weights
         x__ = self._data
         y_ = [1 if house_to_predict == h else 0 for h in self._houses_data]
-        current_loss = self.loss(weights, x__, y_)
-        self._loss_history[house_to_predict].append(current_loss)
+        # current_loss = self.loss(weights, x__, y_)
+        # self._loss_history[house_to_predict].append(current_loss)
         alpha = self.learning_rate
         gradient = self.gradient(theta, x__, y_)
 

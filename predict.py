@@ -25,14 +25,11 @@ def savePredictionsToFile(predictions, file_path: str = "houses.csv"):
 
 
 if __name__ == "__main__":
-    data = loadModel()
-    if data is None:
+    model = loadModel()
+    if model is None:
         exit(1)
 
-    lr = logistic_regression("datasets/test.csv", False)
-    lr._weights = data["weights"]
-    lr._normalize = data["normalize"]
-    lr._houses = data["houses"]
+    lr = logistic_regression("datasets/2.csv", model)
     predictions = lr.predict()
     savePredictionsToFile(predictions)
     foo = list(zip(lr._houses_data, predictions))
