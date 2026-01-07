@@ -110,9 +110,7 @@ class logistic_regression:
         theta = weights
         start, stop = batch
         x__ = self._data[start : stop]
-        y_ = [1 if house_to_predict == h else 0 for h in self._houses_data]
-        # current_loss = self.loss(weights, x__, y_)
-        # self._loss_history[house_to_predict].append(current_loss)
+        y_ = [1 if house_to_predict == h else 0 for h in self._houses_data[start : stop]]
         alpha = self.learning_rate
         gradient = self.gradient(theta, x__, y_)
 
