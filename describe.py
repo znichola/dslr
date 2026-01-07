@@ -152,3 +152,10 @@ if __name__ == "__main__":
     except Exception:
         print("Error: Failed to process or describe the dataset")
         exit(1)
+
+house_color_map = {
+    'Gryffindor': "#CB5959",
+    'Hufflepuff': "#E5B94C",
+    'Ravenclaw':  '#6A85DF',
+    'Slytherin':  "#52BE76"
+}

@@ -135,7 +135,7 @@ class logistic_regression:
 
     def generate_batches(self):
         m = len(self._data)
-        b = self.batch
+        b = self.batch if self.batch > 0 else m
         return [(i, min(i + b, m)) for i in range(0, m, b)]
 
 

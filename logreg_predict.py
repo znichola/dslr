@@ -1,7 +1,7 @@
 from logistic_regression import logistic_regression
 import pandas as pd
 import pickle
-
+import argparse
 
 def loadModel(file_path: str = "model.pkl"):
     try:
@@ -25,14 +25,31 @@ def savePredictionsToFile(predictions, file_path: str = "houses.csv"):
 
 
 if __name__ == "__main__":
-    model = loadModel()
-    if model is None:
-        exit(1)
+    try:
+        parser = argparse.ArgumentParser(description=("House prediction\n"))
+        parser.add_argument(
+            "dataset_path",
+            type=str
+        )
+        parser.add_argument(
+            "--model_path",
+            type=str,
+            default="model.pkl"
+        )
+        args = parser.parse_args()
 
-    lr = logistic_regression("datasets/2.csv", model)
-    predictions = lr.predict()
-    savePredictionsToFile(predictions)
-    foo = list(zip(lr._houses_data, predictions))
-    [print(a, "!=", b) if a != b else 0 for a, b in foo]
+        model = loadModel(args.model_path)
+
+        if model is None:
+            exit(1)
+
+        lr = logistic_regression(args.dataset_path, model)
+        predictions = lr.predict()
+        savePredictionsToFile(predictions)
+        foo = list(zip(lr._houses_data, predictions))
+        [print(a, "!=", b) if a != b else 0 for a, b in foo]
+    except Exception as error:
+        print(f"Error: {error}")
+        exit(1)
 
 
