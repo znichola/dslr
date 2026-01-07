@@ -18,13 +18,16 @@ class logistic_regression:
         self._data = self.dfToArray(df.transpose())
         self._subjects = list(df.keys())
         self._houses = list(set(self._houses_data))
-        self._weights = [[0 for _ in range(len(self._subjects))] for _ in self._houses]
+        self._weights = [[0.0 for _ in range(len(self._subjects))] for _ in self._houses]
         self._loss_history = {h: [] for h in self._houses}
         self.learning_rate = 0.1
         self.max_epoch = 100
         self.batch = 0
-        self.stochastic = False
         self.logging_interval = 10
+        self.useStochastic = False
+        self.useMomentum = False
+        self.momentum = 0.9
+        self._velocity = {h: [0.0 for _ in range(len(self._subjects))] for h in self._houses}
 
         if model:
             self._houses = model["houses"]
@@ -116,8 +119,13 @@ class logistic_regression:
         alpha = self.learning_rate
         gradient = self.gradient(theta, x__, y_)
 
+        if self.useMomentum:
+            v_prev = self._velocity[house_to_predict]
+            v_new = [self.momentum * v + alpha * g for v, g in zip(v_prev, gradient)]
+            self._velocity[house_to_predict] = v_new
+            return [t - v for t, v in zip(theta, v_new)]
         return [t - alpha * g for t, g in zip(theta, gradient)]
-    
+
     def gradient(self, theta, x__, y_):
         m = len(y_)
         grad = [0.0] * len(theta)
@@ -141,7 +149,7 @@ class logistic_regression:
 
         m = len(self._data)
         b = self.batch if self.batch > 0 else m
-        if self.stochastic:
+        if self.useStochastic:
             foo = list(zip(self._data, self._houses_data))
             random.shuffle(foo)
             self._data = [ d for d, h in foo]

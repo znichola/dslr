@@ -36,7 +36,7 @@ def plot_loss_history(loss_history, log_interval):
 
 
 if __name__ == "__main__":
-    # try:
+    try:
         parser = argparse.ArgumentParser(description=("House prediction\n"))
 
         parser.add_argument(
@@ -57,7 +57,12 @@ if __name__ == "__main__":
             "--optimization",
             type=str,
             default="batch_GD",
-            choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "adam"]
+            choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "momentum_GD"]
+        )
+        parser.add_argument(
+            "--save_fig",
+            type=bool,
+            default=False
         )
         args = parser.parse_args()
 
@@ -67,9 +72,10 @@ if __name__ == "__main__":
             "batch_GD": 0,
             "mini_batch_GD": 142,
             "stochastic_GD": 1,
-            "adam": 420,
+            "momentum_GD": 0,
         }[args.optimization]
-        lr.stochastic = args.optimization == "stochastic_GD"
+        lr.useStochastic = args.optimization == "stochastic_GD"
+        lr.useMomentum = args.optimization == "momentum_GD"
         lr.max_epoch = args.epochs
         lr.learning_rate = args.learning_rate
         lr.logging_interval = int(max(lr.batch / 300, 1))
@@ -80,19 +86,20 @@ if __name__ == "__main__":
             "batch_GD": "Batch Gradient Decent",
             "mini_batch_GD": "Mini-batch Gradient Decent",
             "stochastic_GD": "Stochastic Gradient Decent",
-            "adam": "Some not completed Gradient Decent",
+            "momentum_GD": "Momentum Gradient Decent",
         }[args.optimization], "- model finished training")
 
         lr.save()
 
-
-
         plot_loss_history(lr._loss_history, lr.logging_interval)
-        plt.savefig("log_loss")
+        if args.save_fig:
+            plt.savefig("log_loss")
         plot_confusion_matrix(lr.predict(), lr._houses_data, lr._houses)
-        plt.savefig("confusion_matrix")
-        # plt.show()
+        if args.save_fig:
+            plt.savefig("confusion_matrix")
+        if not args.save_fig:
+            plt.show()
 
-    # except Exception as error:
-    #     print(f"Error: {error}")
-    #     exit(1)
+    except Exception as error:
+        print(f"Error: {error}")
+        exit(1)
