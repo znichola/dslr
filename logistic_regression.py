@@ -142,10 +142,10 @@ class logistic_regression:
         m = len(self._data)
         b = self.batch if self.batch > 0 else m
         if self.stochastic:
-            seed = random.Random(42)
-            seed.shuffle(self._data)
-            seed.shuffle(self._houses_data)
-            random.shuffle(self._data)
+            foo = list(zip(self._data, self._houses_data))
+            random.shuffle(foo)
+            self._data = [ d for d, h in foo]
+            self._houses_data = [ h for d, h in foo]
             return [(0, min(b, m))]
         else:
             return [(i, min(i + b, m)) for i in range(0, m, b)]
