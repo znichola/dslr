@@ -24,30 +24,33 @@ def savePredictionsToFile(predictions, file_path: str = "houses.csv"):
         print(f"Error: Could not save house predictions to '{file_path}'")
 
 
+def setupArgs():
+    parser = argparse.ArgumentParser(description=("House prediction\n"))
+    parser.add_argument(
+        "dataset_path",
+        type=str
+    )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="model.pkl"
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     try:
-        parser = argparse.ArgumentParser(description=("House prediction\n"))
-        parser.add_argument(
-            "dataset_path",
-            type=str
-        )
-        parser.add_argument(
-            "--model_path",
-            type=str,
-            default="model.pkl"
-        )
-        args = parser.parse_args()
+        args = setupArgs()
 
         model = loadModel(args.model_path)
-
         if model is None:
             exit(1)
 
         lr = logistic_regression(args.dataset_path, model)
+
         predictions = lr.predict()
+
         savePredictionsToFile(predictions)
-        foo = list(zip(lr._houses_data, predictions))
-        [print(a, "!=", b) if a != b else 0 for a, b in foo]
     except Exception as error:
         print(f"Error: {error}")
         exit(1)

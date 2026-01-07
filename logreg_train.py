@@ -35,39 +35,42 @@ def plot_loss_history(loss_history, log_interval):
     fig.tight_layout()
 
 
+def setupArgs():
+    parser = argparse.ArgumentParser(description=("House prediction\n"))
+
+    parser.add_argument(
+        "dataset_path",
+        type=str
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=3000
+    )
+    parser.add_argument(
+        "--learning_rate",
+        type=float,
+        default=0.42
+    )
+    parser.add_argument(
+        "--optimization",
+        type=str,
+        default="batch_GD",
+        choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "momentum_GD"]
+    )
+    parser.add_argument(
+        "--save_fig",
+        type=bool,
+        default=False
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     try:
-        parser = argparse.ArgumentParser(description=("House prediction\n"))
-
-        parser.add_argument(
-            "dataset_path",
-            type=str
-        )
-        parser.add_argument(
-            "--epochs",
-            type=int,
-            default=3000
-        )
-        parser.add_argument(
-            "--learning_rate",
-            type=float,
-            default=0.42
-        )
-        parser.add_argument(
-            "--optimization",
-            type=str,
-            default="batch_GD",
-            choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "momentum_GD"]
-        )
-        parser.add_argument(
-            "--save_fig",
-            type=bool,
-            default=False
-        )
-        args = parser.parse_args()
-
+        args = setupArgs()
         lr = logistic_regression(args.dataset_path)
-        lr.learning_rate = 0.1
+
         lr.batch = {
             "batch_GD": 0,
             "mini_batch_GD": 142,
@@ -94,9 +97,11 @@ if __name__ == "__main__":
         plot_loss_history(lr._loss_history, lr.logging_interval)
         if args.save_fig:
             plt.savefig("log_loss")
+
         plot_confusion_matrix(lr.predict(), lr._houses_data, lr._houses)
         if args.save_fig:
             plt.savefig("confusion_matrix")
+
         if not args.save_fig:
             plt.show()
 
