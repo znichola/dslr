@@ -5,6 +5,13 @@ from typing import Optional
 from functools import reduce
 from math import sqrt
 
+house_color_map = {
+    'Gryffindor': "#CB5959",
+    'Hufflepuff': "#E5B94C",
+    'Ravenclaw':  '#6A85DF',
+    'Slytherin':  "#52BE76"
+}
+
 
 def trainDataFilePath():
     return "datasets/dataset_train.csv"
@@ -106,7 +113,6 @@ def describe(df: pd.DataFrame):
         summary['Missing'].append(len(df[col]) - len(col_data))
         summary['Range'].append(max(col_data) - min(col_data))
 
-    # .T transposes the dataFrame
     summary_df = pd.DataFrame(summary, index=numeric_columns).T
 
     return summary_df, summary_df.to_string(float_format="%.6f")
@@ -120,21 +126,19 @@ def dec_by_house(df: pd.DataFrame):
     for house in houses:
         _, ss = describe(df[df["Hogwarts House"] == house])
         stock[house] = ss
-    
     return stock
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
-        print("Error: Please provide a valid file path")
-        exit(1)
-
     try:
+        if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
+            print("Error: Please provide a valid file path")
+            exit(1)
+
         df = loadData(sys.argv[1])
         if df is None:
-            raise ValueError("loadData returned None")
-        
-        # df = df.drop(columns=["Index"])
+            exit(1)
+
         _, desc_string = describe(df)
 
         print("Global dataset")
@@ -152,10 +156,3 @@ if __name__ == "__main__":
     except Exception:
         print("Error: Failed to process or describe the dataset")
         exit(1)
-
-house_color_map = {
-    'Gryffindor': "#CB5959",
-    'Hufflepuff': "#E5B94C",
-    'Ravenclaw':  '#6A85DF',
-    'Slytherin':  "#52BE76"
-}

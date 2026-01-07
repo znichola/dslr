@@ -55,11 +55,7 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [x] arguemnt for train and predict
 - [x] bonus algo, stochastic gradient descent
 - [x] bonus optimization algo, batch, mini batch
-- [o] bonus find 3rd bonus optimization algo
+- [x] bonus find 3rd bonus optimization algo
 - [ ] reorder code so it's logical for explication
 - [ ] final tests from shool repo and fresh folder
 - [ ] push and eval
-
-- [ ] batch things
-- [ ]  - batch bigger than dataset size
-- [ ]  - last batch is less than batch size
