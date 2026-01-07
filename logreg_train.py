@@ -14,18 +14,18 @@ def plot_confusion_matrix(predictions, true_labels, labels):
     )
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    disp.plot(ax=ax, cmap="Blues", colorbar=True)
+    disp.plot(ax=ax, cmap="Reds", colorbar=True)
 
     ax.set_title("Confusion Matrix")
     fig.tight_layout()
-    plt.show()
 
 
-def plot_loss_history(loss_history):
+def plot_loss_history(loss_history, log_interval):
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for house, losses in loss_history.items():
-        ax.plot(losses, label=house, color=house_color_map.get(house))
+        epochs = [log_interval * i for i in range(len(losses))]
+        ax.plot(epochs, losses, label=house, color=house_color_map.get(house))
 
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Log Loss")
@@ -33,7 +33,6 @@ def plot_loss_history(loss_history):
     ax.legend()
     ax.grid(True)
     fig.tight_layout()
-    plt.show()
 
 
 if __name__ == "__main__":
@@ -67,18 +66,32 @@ if __name__ == "__main__":
         lr.batch = {
             "batch_GD": 0,
             "mini_batch_GD": 420,
-            "stochastic_GD": 120,
+            "stochastic_GD": 42,
             "adam": 420,
         }[args.optimization]
         lr.stochastic = args.optimization == "stochastic_GD"
         lr.max_epoch = args.epochs
         lr.learning_rate = args.learning_rate
+        lr.logging_interval = int(max(lr.batch / 300, 1))
 
         lr.train()
+
+        print({
+            "batch_GD": "Batch Gradient Decent",
+            "mini_batch_GD": "Mini-batch Gradient Decent",
+            "stochastic_GD": "Stochastic Gradient Decent",
+            "adam": "Some not completed Gradient Decent",
+        }[args.optimization], "- model finished training")
+
         lr.save()
 
-        plot_loss_history(lr._loss_history)
+
+
+        plot_loss_history(lr._loss_history, lr.logging_interval)
+        plt.savefig("confusion_matrix")
         plot_confusion_matrix(lr.predict(), lr._houses_data, lr._houses)
+        plt.savefig("log_loss")
+        # plt.show()
 
     # except Exception as error:
     #     print(f"Error: {error}")

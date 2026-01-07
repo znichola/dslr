@@ -24,6 +24,7 @@ class logistic_regression:
         self.max_epoch = 100
         self.batch = 0
         self.stochastic = False
+        self.logging_interval = 10
 
         if model:
             self._houses = model["houses"]
@@ -31,11 +32,13 @@ class logistic_regression:
 
     def loadData(self, model):
         df = loadData(self.path)
+        if df is None:
+            exit(1)
         df["Hogwarts House"] = df["Hogwarts House"].fillna("No house")
         df = self.cleanUpData(df)
         df = self.normalizeData(df, model)
         return df
-       
+
     def dfToArray(self, df):
         subject_dict = df.to_dict()
         for subject_key in subject_dict.keys():
@@ -43,9 +46,8 @@ class logistic_regression:
         return [d for d in subject_dict.values()]
 
     def cleanUpData(self, df):
-        # return df.drop(columns=self.columns_to_drop, errors="ignore").dropna()
         return df.drop(columns=self.columns_to_drop, errors="ignore")
-    
+
     def dropna(self, df):
         return df.dropna()
     
@@ -85,7 +87,7 @@ class logistic_regression:
                 for i, house in enumerate(self._houses):
                     self._weights[i] = self.gradient_descent(self._weights[i], house, batch)
 
-            if ep % 10 == 0:
+            if ep % self.logging_interval == 0:
                 predictions =  self.predict()
                 accuracy = sum(c == p for c, p in zip(self._houses_data, predictions)) / len(predictions)
                 pbar.set_postfix(acc=f"{accuracy:.4%}")
