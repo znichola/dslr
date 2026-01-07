@@ -88,9 +88,9 @@ if __name__ == "__main__":
 
 
         plot_loss_history(lr._loss_history, lr.logging_interval)
-        plt.savefig("confusion_matrix")
-        plot_confusion_matrix(lr.predict(), lr._houses_data, lr._houses)
         plt.savefig("log_loss")
+        plot_confusion_matrix(lr.predict(), lr._houses_data, lr._houses)
+        plt.savefig("confusion_matrix")
         # plt.show()
 
     # except Exception as error:

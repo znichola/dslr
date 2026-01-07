@@ -8,3 +8,4 @@ datasets
 model.pkl
 houses.csv
 en.subject.pdf
+*.png

@@ -14,7 +14,7 @@ class logistic_regression:
         self._normalize = []
         df = self.loadData(model)
         df = self.dropna(df) if model is None else self.fillna(df)
-        self._houses_data = df.pop("Hogwarts House")
+        self._houses_data = df.pop("Hogwarts House").to_list()
         self._data = self.dfToArray(df.transpose())
         self._subjects = list(df.keys())
         self._houses = list(set(self._houses_data))
@@ -142,6 +142,9 @@ class logistic_regression:
         m = len(self._data)
         b = self.batch if self.batch > 0 else m
         if self.stochastic:
+            seed = random.Random(42)
+            seed.shuffle(self._data)
+            seed.shuffle(self._houses_data)
             random.shuffle(self._data)
             return [(0, min(b, m))]
         else:
