@@ -84,7 +84,7 @@ class logistic_regression:
             for batch in batches:
                 for i, house in enumerate(self._houses):
                     self._weights[i] = self.gradient_descent(self._weights[i], house, batch)
-            
+
             if ep % 10 == 0:
                 predictions =  self.predict()
                 accuracy = sum(c == p for c, p in zip(self._houses_data, predictions)) / len(predictions)
