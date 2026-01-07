@@ -65,8 +65,8 @@ if __name__ == "__main__":
         lr.learning_rate = 0.1
         lr.batch = {
             "batch_GD": 0,
-            "mini_batch_GD": 420,
-            "stochastic_GD": 42,
+            "mini_batch_GD": 142,
+            "stochastic_GD": 1,
             "adam": 420,
         }[args.optimization]
         lr.stochastic = args.optimization == "stochastic_GD"

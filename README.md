@@ -12,7 +12,10 @@ As for "ft_linear_regression" the [google ml crashcourse](https://developers.goo
 
 ## Links
 
-- [sochastic](https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Linear_regression)
+- []
+- [tensorflow logistic regression](https://www.tensorflow.org/guide/core/logistic_regression_core)
+- [convo with gpt about logistic regression](https://chatgpt.com/share/695cdc62-f9cc-8004-a6f2-a5daba15f574)
+- [sochastic GD](https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Linear_regression)
 
 # Getting started
 
@@ -49,10 +52,10 @@ It's complicated and you can extract various bit of data from them, it could be:
 - [x]  - how to handle data normalization
 - [x]  - do we use numpy? pandas? or just raw python
 - [x]  - sigmoid with very big or small number, how should it be handled
-- [ ] arguemnt for train and predict
-- [ ] bonus algo, stochastic gradient descent
-- [ ] bonus optimization algo, batch, mini batch
-- [ ] bonus find 3rd bonus optimization algo
+- [x] arguemnt for train and predict
+- [x] bonus algo, stochastic gradient descent
+- [x] bonus optimization algo, batch, mini batch
+- [o] bonus find 3rd bonus optimization algo
 - [ ] reorder code so it's logical for explication
 - [ ] final tests from shool repo and fresh folder
 - [ ] push and eval
