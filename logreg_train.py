@@ -4,7 +4,7 @@ from describe import house_color_map
 import argparse
 
 if __name__ == "__main__":
-    try:
+    # try:
         parser = argparse.ArgumentParser(description=("House prediction\n"))
 
         parser.add_argument(
@@ -12,17 +12,35 @@ if __name__ == "__main__":
             type=str
         )
         parser.add_argument(
+            "--epochs",
+            type=int,
+            default=3000
+        )
+        parser.add_argument(
+            "--learning_rate",
+            type=float,
+            default=0.42
+        )
+        parser.add_argument(
             "--optimization",
             type=str,
             default="batch_GD",
-            choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "dropout_GD"]
+            choices=["batch_GD", "mini_batch_GD", "stochastic_GD", "adam"]
         )
         args = parser.parse_args()
 
         lr = logistic_regression(args.dataset_path)
-        lr.learning_rate = 1
-        lr.max_epoch = 100
-        lr.batch = 0
+        lr.learning_rate = 0.1
+        lr.batch = {
+            "batch_GD": 0,
+            "mini_batch_GD": 420,
+            "stochastic_GD": 120,
+            "adam": 420,
+        }[args.optimization]
+        lr.stochastic = args.optimization == "stochastic_GD"
+        lr.max_epoch = args.epochs
+        lr.learning_rate = args.learning_rate
+
         lr.train()
         lr.save()
 
@@ -39,6 +57,6 @@ if __name__ == "__main__":
 
         fig.tight_layout()
         plt.show()
-    except Exception as error:
-        print(f"Error: {error}")
-        exit(1)
+    # except Exception as error:
+    #     print(f"Error: {error}")
+    #     exit(1)

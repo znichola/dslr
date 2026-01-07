@@ -1,6 +1,8 @@
 from describe import loadData, describe
 import pickle
+import random
 import math
+from tqdm import trange
 
 class logistic_regression:
 
@@ -21,6 +23,7 @@ class logistic_regression:
         self.learning_rate = 0.1
         self.max_epoch = 100
         self.batch = 0
+        self.stochastic = False
 
         if model:
             self._houses = model["houses"]
@@ -75,16 +78,17 @@ class logistic_regression:
 
 
     def train(self):
-        for ep in range(self.max_epoch):
+        pbar = trange(self.max_epoch, desc="Training", unit="epoch")
+        for ep in pbar:
             batches = self.generate_batches()
             for batch in batches:
                 for i, house in enumerate(self._houses):
                     self._weights[i] = self.gradient_descent(self._weights[i], house, batch)
             
-            if ep % 100:
+            if ep % 10 == 0:
                 predictions =  self.predict()
                 accuracy = sum(c == p for c, p in zip(self._houses_data, predictions)) / len(predictions)
-                print(f"Epoch {ep}: accuracy = {accuracy:.4%}")
+                pbar.set_postfix(acc=f"{accuracy:.4%}")
                 for i, house in enumerate(self._houses):
                     y = [1 if house == h else 0 for h in self._houses_data]
                     current_loss = self.loss(self._weights[i], self._data, y)
@@ -134,9 +138,14 @@ class logistic_regression:
 
 
     def generate_batches(self):
+
         m = len(self._data)
         b = self.batch if self.batch > 0 else m
-        return [(i, min(i + b, m)) for i in range(0, m, b)]
+        if self.stochastic:
+            random.shuffle(self._data)
+            return [(0, min(b, m))]
+        else:
+            return [(i, min(i + b, m)) for i in range(0, m, b)]
 
 
     def save(self, file_path: str = "model.pkl"):

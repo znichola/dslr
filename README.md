@@ -10,6 +10,10 @@ Then we build a classifier using a logistic regression, and assign students to o
 
 As for "ft_linear_regression" the [google ml crashcourse](https://developers.google.com/machine-learning/crash-course/logistic-regression) is great.
 
+## Links
+
+- [sochastic](https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Linear_regression)
+
 # Getting started
 
 We use [uv](https://docs.astral.sh/uv/getting-started/installation/) for python package managment and venv. It's a simple install script from their website, and it's fast!
