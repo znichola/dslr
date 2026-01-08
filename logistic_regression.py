@@ -8,7 +8,7 @@ class logistic_regression:
     def __init__(self, path, model=None):
         self.path = path
         self.columns_to_drop = ['Arithmancy', 'Defense Against the Dark Arts',
-                        'Transfiguration', 'Care of Magical Creatures', 'Flying', 
+                        'Transfiguration', 'Care of Magical Creatures', 'History of Magic', 
                         'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Index']
         self._normalize = []
         df = self.loadData(model)

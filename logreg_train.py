@@ -45,7 +45,7 @@ def setupArgs():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=3000
+        default=1420
     )
     parser.add_argument(
         "--learning_rate",
